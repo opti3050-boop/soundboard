@@ -14,8 +14,7 @@ OpenJDK 11 or later install.
 | Right-click menu | Edit properties, play, delete — on any button |
 | Double-click (empty grid) | Create a new button at that spot |
 | Right-click (empty canvas) | "New button here" |
-| Button properties | Caption, color picker, audio file (mp3/wav/ogg/flac), start offset, fade-in ms, fade-out ms, volume % |
-| Waveform preview | Visual peak display in the properties dialog; click to set the start offset |
+| Button properties | Caption, color picker, audio file (mp3/wav/ogg/flac), start/stop offset, fade-in ms, fade-out ms, volume % |
 | Keyboard hotkeys | Record any Ctrl/Alt/Shift+key combination per button; fires from any tab |
 | Instant replay cache | Processed clips cached in memory; repeat plays are zero-latency |
 | Drag button between tabs | Drag a button up onto a different tab label to move it there |
