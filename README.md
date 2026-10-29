@@ -103,7 +103,6 @@ soundboard-java/
     ├── SoundButton.java           ← per-button data + paint logic
     ├── ButtonData.java            ← serialisable properties model
     ├── ButtonPropertiesDialog.java← properties editor dialog
-    ├── WaveformPanel.java         ← waveform preview widget
     ├── AudioEngine.java           ← MP3 decode, DSP, playback, cache
     ├── HotkeyUtil.java            ← KeyEvent → "Ctrl+F5" string
     └── LayoutData.java            ← JSON model for save/load
