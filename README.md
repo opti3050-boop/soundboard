@@ -74,16 +74,18 @@ Layouts are plain JSON, compatible with the Python version's format:
     {
       "name": "Page 1",
       "buttons": [
-        {
+{
           "x": 40, "y": 40, "w": 140, "h": 80,
-          "caption": "Intro",
+          "caption": "Sound",
           "colorHex": "#3a7ca5",
           "mp3Path": "/home/user/sounds/intro.mp3",
-          "offsetSec": 2.5,
-          "fadeInMs": 500,
-          "fadeOutMs": 1000,
-          "volumePct": 90,
-          "hotkey": "Ctrl+F1"
+          "offsetSecStart": 0.0,
+          "offsetSecFinish": 0.0,
+          "fadeInMs": 0,
+          "fadeOutMs": 0,
+          "volumePct": 100,
+          "hotkey": "",
+          "id": "611308e0-c3fe-487b-aaf3-a03b4c132f4b"
         }
       ]
     }
