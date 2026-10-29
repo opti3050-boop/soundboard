@@ -1,0 +1,11 @@
+target/
+*.log
+.idea/
+.vscode/
+*.iml
+.soundboard-cache/
+*.html
+*.json
+*.mp3
+*.wav
+*.zip
