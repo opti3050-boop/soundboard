@@ -1,6 +1,10 @@
 package com.soundboard;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 /**
  * All persistent properties of one sound button.
@@ -42,6 +46,30 @@ public class ButtonData {
 
     public void setColor(Color c) {
         colorHex = String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
+
+    // --- auto-size ---
+    public static final int AUTO_HEIGHT    = 40;   // fixed height used by autoSize()
+    public static final int AUTO_MIN_WIDTH = 60;   // same minimum as manual resize
+    private static final int AUTO_PADDING  = 28;   // horizontal room around the text
+
+    /**
+     * Resize this button to height 40 and a width that fits its caption
+     * (and the hotkey line, if one is shown). Uses the same font as
+     * SoundButton.paint() so the text is never truncated.
+     */
+    public void autoSize() {
+        Graphics2D g = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        try {
+            FontMetrics fm = g.getFontMetrics(new Font("SansSerif", Font.BOLD, 12));
+            int textW = fm.stringWidth(caption == null ? "" : caption);
+            if (hotkey != null && !hotkey.isBlank())
+                textW = Math.max(textW, fm.stringWidth("[" + hotkey + "]"));
+            w = Math.max(AUTO_MIN_WIDTH, textW + AUTO_PADDING);
+            h = AUTO_HEIGHT;
+        } finally {
+            g.dispose();
+        }
     }
 
     /** Deep copy so edits in the dialog don't affect the live button until OK. */
