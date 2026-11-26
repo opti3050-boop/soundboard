@@ -120,6 +120,10 @@ public class MainWindow extends JFrame {
 
         // ── Button management ─────────────────────────────────────────────────
         bar.add(btn("New Button", this::newButtonCurrent));
+        JButton autoSizeBtn = btn("Auto-Size Buttons", this::autoSizeAllButtons);
+        autoSizeBtn.setToolTipText(
+            "Resize every button on every page to height 40 and a width that fits its caption, then lay them out in rows");
+        bar.add(autoSizeBtn);
         bar.addSeparator();
 
         // ── Transport (Play / Pause / Stop) + progress bar ────────────────────
@@ -279,9 +283,61 @@ public class MainWindow extends JFrame {
         return (pageIdx >= 0 && pageIdx < pages.size()) ? pages.get(pageIdx) : null;
     }
 
+    /** Resize all buttons on all pages (height 40, width from caption) and lay
+     *  them out left-to-right in a row; when the visible page width is full,
+     *  continue on a new row below. Order follows the buttons' current
+     *  positions (top to bottom, then left to right). */
+    private void autoSizeAllButtons() {
+        final int startX = 40, startY = 40, gap = 10;
+        for (GridPanel page : pages) {
+            List<SoundButton> sorted = new ArrayList<>(page.getButtons());
+            sorted.sort(Comparator.<SoundButton>comparingInt(b -> b.data.y)
+                                  .thenComparingInt(b -> b.data.x));
+
+            // Rightmost x a button may end at: visible width minus a right margin.
+            // (A page that isn't laid out yet reports 0, so fall back to 1200.)
+            int limitX = page.getWidth() > 0 ? page.getWidth() - startX : 1200;
+
+            int x = startX, y = startY;
+            for (SoundButton b : sorted) {
+                b.data.autoSize();
+                // No room left in this row -> start a new row below
+                if (x > startX && x + b.data.w > limitX) {
+                    x = startX;
+                    y += ButtonData.AUTO_HEIGHT + gap;
+                }
+                b.data.x = x;
+                b.data.y = y;
+                x += b.data.w + gap;
+            }
+            page.resetPan();   // also repaints; brings the layout into view
+        }
+    }
+
     private void newButtonCurrent() {
         GridPanel p = currentPage();
-        if (p != null) addButtonAt(p, 40, 40, true);
+        if (p == null) return;
+        Point spot = nextFreeSpot(p, 140, 80);   // same size as addButtonAt() creates
+        addButtonAt(p, spot.x, spot.y, true);
+    }
+
+    /** First free spot for a w x h button, scanning left to right across the
+     *  visible page width, then row by row downward. Free = not overlapping
+     *  any existing button (with a 10 px gap). Falls back to (40, 40). */
+    private Point nextFreeSpot(GridPanel page, int w, int h) {
+        final int startX = 40, startY = 40, gap = 10, step = 10, maxY = 3000;
+        int limitX = page.getWidth() > 0 ? page.getWidth() - startX : 1200;
+        for (int y = startY; y + h <= maxY; y += step) {
+            for (int x = startX; x + w <= limitX || x == startX; x += step) {
+                Rectangle cand = new Rectangle(x, y, w + gap, h + gap);
+                boolean free = true;
+                for (SoundButton b : page.getButtons()) {
+                    if (cand.intersects(b.bounds())) { free = false; break; }
+                }
+                if (free) return new Point(x, y);
+            }
+        }
+        return new Point(startX, startY);
     }
 
     // ── wire grid callbacks ───────────────────────────────────────────────────
