@@ -122,7 +122,7 @@ public class MainWindow extends JFrame {
         bar.add(btn("New Button", this::newButtonCurrent));
         JButton autoSizeBtn = btn("Auto-Size Buttons", this::autoSizeAllButtons);
         autoSizeBtn.setToolTipText(
-            "Resize every button on every page to height 40 and a width that fits its caption, then lay them out in rows");
+            "Resize every button on every page to height 40 and a width that fits its caption, then sort them alphabetically and lay them out in rows");
         bar.add(autoSizeBtn);
         bar.addSeparator();
 
@@ -285,14 +285,18 @@ public class MainWindow extends JFrame {
 
     /** Resize all buttons on all pages (height 40, width from caption) and lay
      *  them out left-to-right in a row; when the visible page width is full,
-     *  continue on a new row below. Order follows the buttons' current
-     *  positions (top to bottom, then left to right). */
+     *  continue on a new row below. Buttons are sorted alphabetically
+     *  by caption (case-insensitive). */
     private void autoSizeAllButtons() {
         final int startX = 40, startY = 40, gap = 10;
         for (GridPanel page : pages) {
             List<SoundButton> sorted = new ArrayList<>(page.getButtons());
-            sorted.sort(Comparator.<SoundButton>comparingInt(b -> b.data.y)
-                                  .thenComparingInt(b -> b.data.x));
+            // Alphabetical by caption (case-insensitive); ties keep current position order
+            sorted.sort(Comparator.<SoundButton, String>comparing(
+                            b -> b.data.caption == null ? "" : b.data.caption.trim(),
+                            String.CASE_INSENSITIVE_ORDER)
+                        .thenComparingInt(b -> b.data.y)
+                        .thenComparingInt(b -> b.data.x));
 
             // Rightmost x a button may end at: visible width minus a right margin.
             // (A page that isn't laid out yet reports 0, so fall back to 1200.)
