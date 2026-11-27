@@ -34,6 +34,7 @@ public class MainWindow extends JFrame {
     private final List<GridPanel> pages   = new ArrayList<>();
     private final List<String>   tabIds   = new ArrayList<>(); // tab UUIDs, parallel to pages
     private       AppSettings    settings = new AppSettings();
+    private final TtsPanel      ttsPanel = new TtsPanel(audio, this::addTtsButton);
 
     public boolean hotkeyCapturePaused = false;
 
@@ -87,8 +88,11 @@ public class MainWindow extends JFrame {
         // ── Pinned help tab (always first, never removable) ───────────────────
         tabs.addTab(HelpPanel.TAB_TITLE, new HelpPanel());
 
+        // ── Pinned TTS tab (always second, never removable) ───────────────────
+        tabs.addTab(TtsPanel.TAB_TITLE, ttsPanel);
+
         addPage("Page 1");
-        tabs.setSelectedIndex(1);   // start on Page 1, not the help tab
+        tabs.setSelectedIndex(FIRST_PAGE_TAB);   // start on Page 1, not the help/TTS tabs
 
         // Pass settings to audio engine
         audio.setAppSettings(settings);
@@ -231,8 +235,8 @@ public class MainWindow extends JFrame {
         return grid;
     }
 
-    /** Index 0 is always the help tab; page tabs start at index 1. */
-    private static final int FIRST_PAGE_TAB = 1;
+    /** Index 0 is the help tab, index 1 the TTS tab; page tabs start at index 2. */
+    private static final int FIRST_PAGE_TAB = 2;
 
     private String getTabUuidAt(int tabIdx) {
         int pageIdx = tabIdx - FIRST_PAGE_TAB;
@@ -242,14 +246,14 @@ public class MainWindow extends JFrame {
 
     private void newTab() {
         String name = JOptionPane.showInputDialog(this, "Tab name:",
-                "Page " + (tabs.getTabCount()));
+                "Page " + (tabs.getTabCount() - FIRST_PAGE_TAB + 1));
         if (name != null && !name.isBlank()) addPage(name.trim());
     }
 
     private void renameTab() {
         int idx = tabs.getSelectedIndex();
         if (idx < FIRST_PAGE_TAB) {
-            JOptionPane.showMessageDialog(this, "The Help tab cannot be renamed.");
+            JOptionPane.showMessageDialog(this, "The Help and TTS tabs cannot be renamed.");
             return;
         }
         String name = JOptionPane.showInputDialog(this, "New name:", tabs.getTitleAt(idx));
@@ -259,7 +263,7 @@ public class MainWindow extends JFrame {
     private void deleteTab() {
         int idx = tabs.getSelectedIndex();
         if (idx < FIRST_PAGE_TAB) {
-            JOptionPane.showMessageDialog(this, "The Help tab cannot be deleted.");
+            JOptionPane.showMessageDialog(this, "The Help and TTS tabs cannot be deleted.");
             return;
         }
         // Need at least one page tab remaining (plus the help tab)
@@ -316,6 +320,30 @@ public class MainWindow extends JFrame {
             }
             page.resetPan();   // also repaints; brings the layout into view
         }
+    }
+
+    /** Called by the TTS tab: add a button playing the generated MP3. */
+    private void addTtsButton(String caption, String mp3Path) {
+        if (pages.isEmpty()) return;
+        GridPanel target;
+        if (pages.size() == 1) {
+            target = pages.get(0);
+        } else {
+            String[] names = new String[pages.size()];
+            for (int i = 0; i < names.length; i++) names[i] = tabs.getTitleAt(i + FIRST_PAGE_TAB);
+            Object sel = JOptionPane.showInputDialog(this, "Add the button to which page?",
+                    "Add as button", JOptionPane.QUESTION_MESSAGE, null, names, names[0]);
+            if (sel == null) return;
+            target = pages.get(Arrays.asList(names).indexOf(sel));
+        }
+        Point spot = nextFreeSpot(target, 140, 80);
+        ButtonData d = new ButtonData(spot.x, spot.y, 140, 80);
+        d.caption  = caption;
+        d.mp3Path  = mp3Path;
+        d.colorHex = settings.defaultButtonColor;
+        d.id       = UUID.randomUUID().toString();
+        target.addButton(d);
+        tabs.setSelectedIndex(pages.indexOf(target) + FIRST_PAGE_TAB);
     }
 
     private void newButtonCurrent() {
@@ -658,7 +686,7 @@ public class MainWindow extends JFrame {
         // Removing sensitive parameters
         settings.execParam2 = " ";
         layout.settings = settings;
-        // Start from FIRST_PAGE_TAB to skip the pinned help tab
+        // Start from FIRST_PAGE_TAB to skip the pinned help and TTS tabs
         for (int i = FIRST_PAGE_TAB; i < tabs.getTabCount(); i++) {
             LayoutData.TabData td = new LayoutData.TabData();
             int pageIdx = i - FIRST_PAGE_TAB;
@@ -691,7 +719,7 @@ public class MainWindow extends JFrame {
                 new FileInputStream(fc.getSelectedFile()), StandardCharsets.UTF_8)) {
             LayoutData layout = gson.fromJson(r, LayoutData.class);
 
-            // Remove only page tabs; keep the help tab at index 0
+            // Remove only page tabs; keep the help (0) and TTS (1) tabs
             while (tabs.getTabCount() > FIRST_PAGE_TAB)
                 tabs.removeTabAt(tabs.getTabCount() - 1);
             pages.clear();
